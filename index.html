@@ -1,0 +1,104 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#12232b"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><title>Día Cero</title>
+<style>
+:root{--bg:#12232b;--c:#1c333d;--t:#ece6d3;--m:#9db0b4;--a:#f2c230;--g:#6fcf97;--r:#e4572e}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:16px/1.4 system-ui,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#app{max-width:560px;margin:auto;padding:12px}h1,h2,h3{font-family:Georgia,serif;margin:6px 0}h1{font-size:2.4rem;letter-spacing:.04em}
+.card{background:var(--c);border-radius:6px;border-left:4px solid var(--a);padding:12px;margin:10px 0}
+button{background:#2b4854;color:var(--t);border:0;border-radius:6px;padding:13px;font:inherit;margin:3px 0;width:100%}button.p{background:var(--a);color:#1a1a1a;font-weight:700}button:disabled{opacity:.4}
+.row{display:flex;gap:6px;flex-wrap:wrap}.row>*{flex:1 1 40%}.bar{height:6px;background:#0d1a20;border-radius:3px;overflow:hidden;margin:2px 0 5px}.bar i{display:block;height:100%}
+select,input:not([type=checkbox]){background:#2b4854;color:var(--t);border:0;border-radius:6px;padding:11px;font:inherit;width:100%;margin:2px 0}small,.m{color:var(--m)}
+.tk{overflow:hidden;white-space:nowrap;background:var(--r);color:#fff;padding:7px;border-radius:4px}.tk span{display:inline-block;animation:mq 20s linear infinite}@keyframes mq{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
+.it{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #2b4854}.it button{width:auto;padding:8px 12px}
+@media(prefers-reduced-motion:reduce){.tk span{animation:none}}
+</style></head><body><div id="app"></div><script>
+const $=s=>document.querySelector(s),R=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),P=a=>a[R(0,a.length-1)],K=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
+let G=null,S={comp:null,m:[],car:0,home:'depto',lvl:1,cat:'cyber',dif:1,pet:0},ac;
+const beep=(f=440,d=.12)=>{try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}try{navigator.vibrate(30)}catch(e){}};
+const save=()=>{try{localStorage.setItem('dc',JSON.stringify(G))}catch(e){}},out=h=>{$('#app').innerHTML=h;scrollTo(0,0)};
+const CT=[{id:'cyber',ic:'💻',n:'Ciberataque global',d:14,card:12,pow:0,dirty:0,sick:.05,inf:1,t:'Caen bancos, redes y cajeros. Sin internet ni tarjetas: manda el efectivo.'},
+{id:'apag',ic:'🔌',n:'Apagón masivo',d:10,card:14,pow:1,dirty:0,sick:.05,inf:1.1,t:'Sin luz: la comida fresca se pudre y los surtidores no andan.'},
+{id:'inun',ic:'🌊',n:'Inundación',d:10,card:18,pow:1,dirty:1,sick:.08,inf:1.1,t:'El agua de red está contaminada y las calles, cortadas.'},
+{id:'pand',ic:'😷',n:'Pandemia',d:21,card:20,pow:0,dirty:0,sick:.15,inf:1.2,t:'Contagio alto: cada salida o refugio multiplica el riesgo.'},
+{id:'sism',ic:'🏚️',n:'Terremoto',d:12,card:15,pow:1,dirty:1,sick:.06,inf:1.2,t:'Réplicas, rutas cortadas y agua contaminada.'},
+{id:'crisis',ic:'📉',n:'Crisis económica',d:30,card:13,pow:0,dirty:0,sick:.05,inf:1.6,t:'Precios que suben por hora y góndolas vacías durante un mes.'}];
+const TY={Adulto:1,Mayor:.85,Niño:.6,Bebé:.4},LOCN={home:'Hogar',ref:'Refugio oficial',fam:'Casa de familiares',cam:'Campo'};
+const IT=[['agua','Agua 5 L','S',4,1,5],['fresca','Carne y verduras frescas (3 raciones)','S',9,2,3],['pan','Pan y lácteos (2 raciones)','S',6,1,2],['cer','Arroz y fideos (4 raciones, se cocinan)','S',8,2,4],['lat','Enlatados (3 raciones)','S',10,2,3],['bar','Galletitas y barras (2 raciones)','S',5,1,2],['hig','Higiene y papel (6 días)','S',8,2,6],['pm','Comida de mascota (3 días)','S',6,1,3],['med','Medicación diaria (5 días)','F',15,1,5],['bot','Botiquín (3 usos)','F',18,1,3],['pas','Pastillas potabilizadoras (20 L)','F',6,.2,20],['pil','Pilas x4','H',6,.5,4],['lin','Linterna','H',10,1,1],['rad','Radio a manivela','H',20,1,1],['sol','Cargador solar','H',25,1,1],['enc','Fósforos y encendedor','H',3,.2,1],['gas','Garrafa de gas (6 días)','H',22,3,6],['abr','Abrelatas','H',3,.3,1],['man','Manta térmica','H',9,1,1],['rep','Repelente y bolsas','H',5,.5,1],['naf','Nafta 10 L','E',8,0,10]];
+const ST={S:'🛒 Súper',F:'💊 Farmacia',H:'🔧 Ferretería',E:'⛽ Estación',B:'🏧 Cajero'},NM=Object.fromEntries(IT.map(x=>[x[0],x[1].split(' (')[0]]));
+const cat=()=>CT.find(x=>x.id==G.cat),A=()=>G.m.filter(x=>x.a),TT=()=>A().reduce((s,x)=>s+x.f,0),cap=()=>G.home=='casa'?70:40;
+const food=()=>G.fr.reduce((s,b)=>s+b[0],0)+G.i.lat+G.i.bar+G.i.cer,used=()=>IT.reduce((s,x)=>s+(x[0]=='naf'?0:x[4]*G.i[x[0]]/x[5]),0)+G.fr.reduce((s,b)=>s+b[0]*.7,0);
+const pr=x=>Math.round(x[3]*(1+(G.t-8)/12*.7)*cat().inf*G.dif),stk=x=>Math.max(0,14-Math.floor(G.t-8)-(G.bt[x[0]]||0)),cardOk=()=>G.t<cat().card,hh=t=>Math.floor(t)+':'+(t%1?'30':'00');
+function intro(){out(`<div class=card style="text-align:center"><h1>DÍA CERO</h1><p class=m>Simulador de supervivencia</p><div class=tk><span>⚠️ ÚLTIMO MOMENTO: caída global de sistemas · las autoridades piden abastecerse por varios días · sin fecha de restablecimiento · mantenga la calma</span></div></div><button class=p onclick="setup()">Nueva partida</button>${localStorage.getItem('dc')?'<button onclick="cont()">Continuar partida</button>':''}`)}
+function cont(){try{G=JSON.parse(localStorage.getItem('dc'));G.scr=='shop'?shop():G.scr=='end'?intro():day()}catch(e){intro()}}
+function mk(c){c=isNaN(c)?c:+c;const n=isNaN(c)?1:c,t=['Adulto','Adulto','Niño','Niño','Mayor'];S.comp=c;S.m=Array.from({length:n},(_,i)=>({n:c=='h'?'Hombre':c=='m'?'Mujer':'Integrante '+(i+1),t:n==1?'Adulto':t[i],med:0}))}
+function setup(){const c=CT.find(x=>x.id==S.cat),sel=(k,o)=>`<select onchange="S.${k}=this.value;setup()">${o.map(([v,l])=>`<option value="${v}" ${v==S[k]?'selected':''}>${l}</option>`).join('')}</select>`;
+out(`<h2>1. ¿Quién juega?</h2><div class=row>${[['h','👨 Hombre'],['m','👩 Mujer'],[2,'👥 Familia de 2'],[3,'Familia de 3'],[4,'Familia de 4'],[5,'Familia de 5']].map(([k,l])=>`<button class="${S.comp==k?'p':''}" onclick="mk('${k}');setup()">${l}</button>`).join('')}</div>
+${S.m.map((x,i)=>`<div class=card><input value="${x.n}" onchange="S.m[${i}].n=this.value"><div class=row><select onchange="S.m[${i}].t=this.value">${Object.keys(TY).map(t=>`<option ${t==x.t?'selected':''}>${t}</option>`).join('')}</select><label><input type=checkbox ${x.med?'checked':''} onchange="S.m[${i}].med=this.checked?1:0"> Medicación diaria</label></div></div>`).join('')}
+<h2>2. Catástrofe</h2>${sel('cat',CT.map(x=>[x.id,x.ic+' '+x.n+' ('+x.d+' días)']))}<p class=m>${c.t}</p>
+<h2>3. Tu situación</h2><div class=row><label>🚗 Auto ${sel('car',[[0,'No tengo'],[1,'Tengo auto']])}</label><label>🏠 Vivienda ${sel('home',[['depto','Departamento'],['casa','Casa']])}</label><label>🐕 Mascota ${sel('pet',[[0,'No'],[1,'Sí']])}</label><label>💰 Presupuesto ${sel('lvl',[[0,'Ajustado'],[1,'Medio'],[2,'Holgado']])}</label></div><label>Dificultad ${sel('dif',[[.8,'Fácil (precios bajos)'],[1,'Realista'],[1.25,'Extremo']])}</label>
+<button class=p onclick="go()">Comenzar: día de compras</button><button onclick="intro()">Volver</button>`)}
+function go(){if(!S.m.length)return alert('Elegí quién juega');const c=CT.find(x=>x.id==S.cat),n=S.m.length,b=Math.round([150,250,400][S.lvl]*(.6+.4*n)),i={};IT.forEach(x=>i[x[0]]=0);i.naf=+S.car?10:0;
+G={scr:'shop',m:S.m.map(x=>({...x,f:TY[x.t],fd:100,wa:100,hp:100,mo:100,hy:100,sk:0,a:1})),cat:S.cat,car:+S.car,home:S.home,pet:+S.pet,dif:+S.dif,D:c.d,day:0,t:8,st:'S',cash:Math.round(b*.2),bank:b-Math.round(b*.2),pay:'card',i,fr:[],wd:0,loc:'home',pl:{r:1,w:1,c:'gas',a:'rest'},log:[],ev:null,hist:{red:0,gave:0},help:R(Math.ceil(c.d*.5),Math.ceil(c.d*.8)),bt:{},rd:0,mv:0};shop()}
+function shop(){G.scr='shop';save();const c=cat(),T=TT(),D=G.D,md=G.m.filter(x=>x.med).length,np=Math.ceil(T*3*D/20);
+const nd=[['Agua (L)',G.i.agua,Math.ceil(T*3.5*D)],['Comida (raciones)',food(),Math.ceil(T*D)],['Higiene (días)',G.i.hig,D],['Gas (días)',G.i.gas,D]];if(md)nd.push(['Medicación (días)',G.i.med,md*D]);if(c.dirty)nd.push(['Potabilizar (L)',G.i.pas,Math.min(T*3*D,200)]);if(G.car)nd.push(['Nafta (L)',G.i.naf,40]);['lin','rad','enc','abr','bot','man','sol'].forEach(k=>nd.push([NM[k],G.i[k],1]));nd.push(['Pilas',G.i.pil,8]);
+const its=IT.filter(x=>x[2]==G.st&&(x[0]!='naf'||G.car)&&(x[0]!='pm'||G.pet));
+out(`<div class=card><b>${c.ic} ${c.n}</b> · Víspera · 🕗 ${hh(G.t)} (cierra 20:00)<br>💵 Efectivo $${G.cash} · 💳 Banco $${G.bank} ${cardOk()?'':'<b style="color:var(--r)">(sistema caído)</b>'}<br><small>Mochila/depósito: ${used().toFixed(0)}/${cap()} · Pago: <a onclick="G.pay=G.pay=='card'?'cash':'card';shop()" style="color:var(--a)">${G.pay=='card'?'tarjeta':'efectivo'} (cambiar)</a></small></div>
+<details class=card><summary>📋 Lista de necesidades para ${A().length} persona(s) y ${D} días</summary>${nd.map(([n,h,q])=>`<div class=it><span>${n}</span><span>${Math.round(h)}/${q} ${h>=q?'✅':'❌'}</span></div>`).join('')}</details>
+<div class=row>${Object.entries(ST).map(([k,l])=>`<button class="${G.st==k?'p':''}" onclick="stt('${k}')">${l}</button>`).join('')}</div><small>Cambiar de local cuesta 30 min.</small>
+${G.st=='B'?`<div class=card>${cardOk()?`Retirá efectivo (1 h de cola):<div class=row><button onclick="atm(50)">$50</button><button onclick="atm(100)">$100</button><button onclick="atm(9999)">Todo</button></div>`:'🏧 Cajeros fuera de servicio.'}</div>`:its.map(x=>`<div class=it><span>${x[1]}<br><small>$${pr(x)} · quedan ${stk(x)}</small></span><span><button onclick="buy('${x[0]}',1)">+1</button> <button onclick="buy('${x[0]}',5)">+5</button></span></div>`).join('')}
+<button class=p onclick="endShop()">Terminar compras y encerrarse</button>`)}
+function stt(k){if(k!=G.st){G.st=k;G.t+=.5}G.t>=20?endShop():shop()}
+function atm(q){const v=Math.min(q,G.bank);G.bank-=v;G.cash+=v;G.t+=1;beep(300);G.t>=20?endShop():shop()}
+function buy(id,q){const x=IT.find(a=>a[0]==id);q=Math.min(q,stk(x));if(q<1)return beep(150);const cost=pr(x)*q,w=G.pay=='card'&&cardOk()?'bank':'cash';if(G[w]<cost||used()+x[4]*q>cap()+.01){beep(150);return alert(G[w]<cost?'No alcanza el dinero ('+(w=='bank'?'tarjeta':'efectivo')+')':'No hay espacio')}
+G[w]-=cost;G.bt[id]=(G.bt[id]||0)+q;if(id=='fresca'||id=='pan')G.fr.push([x[5]*q,0]);else G.i[id]+=x[5]*q;G.t+=.1;beep(520,.06);G.t>=20?endShop():shop()}
+function endShop(){G.day=1;G.log.unshift('Cerrás la puerta. Empieza el encierro.');day()}
+function bars(m){const b=(l,v,c)=>`<small>${l} ${Math.round(v)}</small><div class=bar><i style="width:${v}%;background:${c}"></i></div>`;return `<div class=card style="${m.a?'':'opacity:.4'}"><b>${m.n}</b> <small>${m.t}${m.sk?' · 🤒 enfermo':''}${m.a?'':' · ☠️'}</small><div class=row>${b('🍽️',m.fd,'#f2c230')}${b('💧',m.wa,'#5dade2')}${b('❤️',m.hp,'#e4572e')}${b('🙂',m.mo,'#6fcf97')}${b('🧼',m.hy,'#bb8fce')}</div></div>`}
+function sel(k,v){G.pl[k]=v;day()}
+function day(){G.scr='day';save();const c=cat(),i=G.i,pl=G.pl,o=(k,v,l)=>`<button class="${pl[k]==v?'p':''}" onclick="sel('${k}','${v}')">${l}</button>`,sick=A().some(x=>x.sk);
+out(`<div class=card><b>Día ${G.day}/${G.D}</b> · ${c.ic} ${c.n} · 📍${LOCN[G.loc]}<br><small>💧${Math.round(i.agua)} L limpia + ${Math.round(G.wd)} L sucia · 🍽️${food().toFixed(1)} rac · 🔥${i.gas} d gas · 🔋${i.pil} · 💊${i.med} d · ⛽${i.naf} L · 💵$${G.cash}${G.pet?' · 🐕'+i.pm+' d':''}</small></div>${G.m.map(bars).join('')}
+${G.ev?evHtml():`<h3>Plan de hoy</h3><small>Raciones</small><div class=row>${o('r',1,'Completa')}${o('r',.6,'Reducida')}${o('r',.3,'Mínima')}</div><small>Agua</small><div class=row>${o('w',1,'Normal')}${o('w',.6,'Reducida')}</div><small>Cocina</small><div class=row>${o('c','gas','Gas')}${o('c','fuego','Fuego')}${o('c','frio','Comida fría')}</div><small>Actividad</small><div class=row>${o('a','rest','😴 Descansar')}${o('a','juego','🎲 Juego')}${o('a','charla','🗣️ Charla')}${o('a','guardia','🛡️ Guardia')}${o('a','agua','🚰 Buscar agua')}</div>
+<div class=row><button onclick="radio()" ${i.rad&&i.pil&&!G.rd?'':'disabled'}>📻 Radio</button><button onclick="purify()" ${G.wd>0?'':'disabled'}>🧪 Potabilizar</button><button onclick="cure()" ${sick&&i.bot?'':'disabled'}>🩹 Curar</button><button onclick="mvs()">🚗 Mudarse</button></div><button class=p onclick="nextDay()">Pasar el día ▶</button>`}
+<div class=card><b>Diario</b>${G.log.slice(0,8).map(l=>`<p class=m style="margin:4px 0">${l}</p>`).join('')}</div>`)}
+function radio(){G.i.pil--;G.rd=1;G.log.unshift('📻 '+P(['Anuncian ayuda oficial hacia el día '+G.help+'.','Dicen que los refugios tienen cupo limitado.','Piden no consumir agua sin tratar.','Los controles en ruta demoran a los autos.']));day()}
+function purify(){const t=Math.min(G.wd,G.i.pas);if(t>0){G.i.pas-=t;G.wd-=t;G.i.agua+=t;G.log.unshift('🧪 Potabilizaste '+t.toFixed(0)+' L con pastillas.')}else if(G.i.gas>=1&&G.i.enc){G.i.gas--;const u=Math.min(G.wd,20);G.wd-=u;G.i.agua+=u;G.log.unshift('🔥 Herviste '+u.toFixed(0)+' L.')}else G.log.unshift('No tenés cómo potabilizar.');day()}
+function cure(){const m=A().find(x=>x.sk);G.i.bot--;m.sk=0;m.hp=K(m.hp+10);G.log.unshift('🩹 Curaste a '+m.n+'.');day()}
+function take(n){if(food()<n)return 0;for(const k of ['lat','bar','cer']){const u=Math.min(G.i[k],n);G.i[k]-=u;n-=u}for(const b of G.fr){const u=Math.min(b[0],n);b[0]-=u;n-=u}G.fr=G.fr.filter(b=>b[0]>.01);return 1}
+function pass(){const c=cat(),L=[],p=G.pl,As=A(),T=TT(),i=G.i;let need=T*p.r,eat=0,ck=p.c=='gas'&&i.gas>=1||p.c=='fuego'&&i.enc>0;
+const loc={ref:()=>{i.lat+=T*.6;i.agua+=T*2.4},fam:()=>{i.lat+=T*.3;i.agua+=T*1.5},cam:()=>{i.agua+=8;i.lat+=T*.4}}[G.loc];loc&&loc();
+if(G.day==G.help&&G.loc!='cam'){i.agua+=T*6;i.lat+=T*3;L.push('🚁 ¡Llegó ayuda oficial con agua y alimentos!')}
+G.fr.sort((a,b)=>b[1]-a[1]);G.fr.forEach(b=>{const t=Math.min(b[0],need-eat);b[0]-=t;eat+=t});G.fr=G.fr.filter(b=>b[0]>.01);
+const f1=(k,ok=1)=>{if(!ok)return;const t=Math.min(i[k],need-eat);i[k]-=t;eat+=t};f1('lat',i.abr>0);f1('bar');f1('cer',ck);if(ck&&p.c=='gas')i.gas--;
+if(p.a=='agua'){if(c.dirty)G.wd+=12;else i.agua+=12;L.push('🚰 Conseguiste 12 L de agua'+(c.dirty?' (sucia)':'')+'.');if(Math.random()<c.sick*2)p.sk=1}
+let wn=T*3*p.w+(ck?T*.5:0),dr=Math.min(i.agua,wn),dirty=0;i.agua-=dr;if(dr<wn&&G.wd>0){const u=Math.min(G.wd,wn-dr);G.wd-=u;dr+=u;dirty=1;L.push('⚠️ Tomaron agua sin tratar.')}
+const s=T?Math.min(1,eat/T):1,ws=Math.min(1,dr/(T*3)),lit=i.lin>0&&i.pil>0;if(lit&&G.day%2==0)i.pil--;if(p.r<1)G.hist.red++;
+As.forEach(m=>{m.fd=K(m.fd+s*25-25+(s>=1?5:0));m.wa=K(m.wa+ws*30-30+(ws>=.99?8:0));m.hy=i.hig>0?K(m.hy+6):K(m.hy-10);
+let mo=-4-(p.r<1?2:0)-(p.w<1?2:0)-(lit?0:6)+({juego:14,charla:10,rest:3,guardia:-3}[p.a]||0)-(G.loc=='ref'?3:0)+(G.loc=='fam'?3:G.loc=='cam'?2:0),h=0;
+if(m.fd<20)h-=10;if(m.wa<25)h-=10;if(m.wa<=0)h-=15;if(m.hy<30)h-=4;if(m.sk)h-=8;if(dirty&&Math.random()<.6){h-=15;if(Math.random()<.4)m.sk=1}
+if(m.med){if(i.med>=1)i.med--;else h-=12}if(m.fd>60&&m.wa>60&&!m.sk)h+=3;if(p.a=='rest')h+=6;if(i.man)h+=1;
+m.hp=K(m.hp+h);m.mo=K(m.mo+mo);if(m.hp<=0){m.a=0;L.push('☠️ '+m.n+' no resistió.')}});
+if(i.hig>0)i.hig--;if(G.pet){if(i.pm>0)i.pm--;else{As.forEach(m=>m.mo=K(m.mo-8));L.push('🐕 La mascota pasa hambre.')}}
+if(As.length&&Math.random()<c.sick*(G.loc=='ref'?2:1)*(G.out?2:1)){const m=P(As);if(!m.sk){m.sk=1;L.push('🤒 '+m.n+' se enfermó.')}}
+G.fr.forEach(b=>b[1]++);let sp=0;const lf=c.pow?2:4;G.fr=G.fr.filter(b=>b[1]<=lf||!(sp+=b[0]));if(sp)L.push('🗑️ Se pudrieron '+sp.toFixed(1)+' raciones frescas.');
+if(s<.99)L.push('Faltó comida.');if(ws<.99)L.push('Faltó agua.');G.rd=0;G.log.unshift('Día '+G.day+': '+(L.join(' ')||'Sin novedades.'));G.log=G.log.slice(0,30);G.day++}
+function nextDay(){pass();beep(330,.2);if(!A().length)return fin('dead');if(G.day>G.D)return fin('win');G.ev=Math.random()<.55&&!(G.loc=='ref')?mkEv():null;day()}
+function mkEv(){const id=P(['vec','rob','llu','rum','tru','tru']),e={id};if(id=='tru')e.x=P([['lat',3,'agua',10],['pil',4,'lat',3],['bar',4,'gas',6]]);return e}
+const EV={vec:['👶 Un vecino con un bebé te pide comida.',['Dar 2 raciones','Negar']],rob:['🔦 Oís ruidos: intentan entrar a robar.',['Salir a enfrentar','Esconderse']],llu:['🌧️ Llueve fuerte.',['Recolectar agua','Ignorar']],rum:['📻 Rumor: reparten comida en el centro.',['Ir a ver','Quedarse']],tru:['🤝 Un vecino ofrece trueque.',['Aceptar','Rechazar']]};
+function evHtml(){const e=G.ev,t=EV[e.id];return `<div class=card style="border-color:var(--r)"><b>${t[0]}</b>${e.x?`<p>Dar ${e.x[1]} de ${NM[e.x[0]]} por ${e.x[3]} de ${NM[e.x[2]]}.</p>`:''}${t[1].map((l,k)=>`<button onclick="evo(${k})">${l}</button>`).join('')}</div>`}
+function evo(k){const e=G.ev,c=cat(),As=A(),T=TT(),m=P(As),i=G.i,id=e.id;let r='';
+if(id=='vec')if(!k){if(take(2)){As.forEach(x=>x.mo=K(x.mo+8));G.hist.gave++;r='Ayudaste al vecino: sube el ánimo.'}else r='No tenías suficiente para dar.'}else{As.forEach(x=>x.mo=K(x.mo-5));r='Negaste ayuda; pesa en el ánimo.'}
+if(id=='rob'){if(G.pl.a=='guardia')r='Tu guardia ahuyentó a los ladrones.';else if(!k&&Math.random()<.5)r='Los espantaste a gritos.';else{if(!k)m.hp=K(m.hp-15);['agua','lat','bar','cer','med'].forEach(q=>i[q]=Math.floor(i[q]*.75));r='Robaron parte de tus provisiones'+(k?'':' y saliste herido/a')+'.'}}
+if(id=='llu'){if(!k){if(c.dirty)G.wd+=15;else i.agua+=15;r='Juntaste 15 L de lluvia'+(c.dirty?' (sin tratar)':'')+'.'}else r='Dejaste pasar la lluvia.'}
+if(id=='rum'){if(!k){if(Math.random()<.5){i.lat+=T*2;r='Era cierto: conseguiste comida.'}else{m.hp=K(m.hp-10);m.mo=K(m.mo-6);r='Era falso. Volviste cansado/a y expuesto/a.'}}else r='Te quedaste en casa.'}
+if(id=='tru'){const[g,gq,w,wq]=e.x;if(!k)if(i[g]>=gq){i[g]-=gq;i[w]+=wq;r='Trueque hecho.'}else r='No tenías lo necesario.';else r='Rechazaste.'}
+G.ev=null;G.log.unshift(r);beep(400);day()}
+const DS=[['ref','Refugio oficial',40,'Comida y agua del estado, pero hacinado y con más contagio.'],['fam','Casa de familiares',80,'Comparten comida y agua; sube el ánimo.'],['cam','Campo',200,'Pozo de agua limpia y huerta; viaje largo.']];
+function mvs(){out(`<h2>Mudarse</h2><p class=m>Con auto: 1 día y 1 L de nafta cada 10 km (15% de avería). A pie: 1 día cada 20 km, con más riesgo. Solo podés llevar ${A().length*10+(G.car?60:0)} de espacio; el resto se deja.</p>${DS.map(d=>`<button onclick="mv('${d[0]}',${d[2]})"><b>${d[1]}</b> · ${d[2]} km<br><small>${d[3]}</small></button>`).join('')}<button onclick="day()">Quedarse</button>`)}
+function mv(id,km){if(G.loc==id)return day();const fuel=km/10,by=G.car&&G.i.naf>=fuel,cp=A().length*10+(G.car?60:0),u=used();if(u>cp){const r=cp/u;Object.keys(G.i).forEach(k=>{if(k!='naf')G.i[k]=G.i[k]*r});G.fr.forEach(b=>b[0]*=r);G.log.unshift('🎒 Dejaste parte de tus cosas por falta de espacio.')}
+let d=by?1:Math.ceil(km/20);if(by){G.i.naf-=fuel;if(Math.random()<.15){d++;G.log.unshift('🔧 Se averió el auto en el camino.')}}else G.log.unshift('🚶 Viajás a pie: '+d+' día(s).');
+G.out=1;G.ev=null;for(let k=0;k<d&&A().length&&G.day<=G.D;k++)pass();G.out=0;G.loc=id;G.mv=1;if(!A().length)return fin('dead');if(G.day>G.D)return fin('win');G.log.unshift('📍 Llegaste: '+LOCN[id]+'.');day()}
+function fin(k){G.scr='end';const As=A(),n=G.m.length,T=TT(),ok=k=='win',ti=!ok?'No sobrevivieron':G.loc!='home'?'Llegaron a salvo a '+LOCN[G.loc]:food()>T*3?'Autosuficientes':'Rescatados',sc=As.length*100+Math.min(G.day,G.D)*10+Math.round(food()+G.i.agua/3);
+const ach=[[As.length==n,'👨‍👩‍👧 Sin bajas'],[G.hist.gave>=2,'🤲 Generoso'],[ok&&food()>T*3,'📦 Previsor'],[G.mv,'🧭 Viajero'],[G.hist.red>=5,'⚖️ Dosificador']].filter(a=>a[0]).map(a=>a[1]);localStorage.removeItem('dc');beep(ok?660:150,.5);
+out(`<div class=card><h1>${ok?'🏁':'💀'} ${ti}</h1><p>${cat().ic} ${cat().n} · ${Math.min(G.day,G.D)} de ${G.D} días · sobrevivientes ${As.length}/${n}</p><h3>Puntaje ${sc}</h3><p>${ach.join(' · ')||'Sin logros esta vez'}</p></div>
+<div class=card><b>Consejos reales para tu kit</b><p class=m>3 litros de agua por persona por día, más la de cocina e higiene. Priorizá enlatados y comida que no necesite cocción. Tené efectivo en billetes chicos, radio y pilas, botiquín y medicación para varios días. Conocé tu ruta y tu punto de reunión, y no esperes a último momento para abastecerte.</p></div>
+<button class=p onclick="setup()">Jugar de nuevo</button><button onclick="navigator.share?navigator.share({text:'Sobreviví en Día Cero: ${ti}. Puntaje ${sc}'}):alert('Puntaje ${sc}')">Compartir resultado</button>`)}
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');intro();
+</script></body></html>
